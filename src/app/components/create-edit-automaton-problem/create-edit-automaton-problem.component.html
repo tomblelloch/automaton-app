@@ -1,0 +1,322 @@
+<h2 *ngIf="!problemToAttempt">
+  {{
+    automatonToEdit
+      ? 'Edit Automaton'
+      : creatingProblem
+      ? 'Create Problem'
+      : 'Create Automaton'
+  }}
+</h2>
+
+<div *ngIf="problemToAttempt">
+  <h2>{{ problemToAttempt.title }}</h2>
+  <p>{{ problemToAttempt.description }}</p>
+  <p>
+    <a *ngIf="problemAcceptExamples">
+      Example words to accept: {{ problemAcceptExamples }}&nbsp;&nbsp;&nbsp;
+    </a>
+    <a *ngIf="problemRejectExamples">
+      Example words to reject: {{ problemRejectExamples }}
+    </a>
+  </p>
+</div>
+
+<div *ngIf="creatingProblem">
+  <mat-stepper orientation="horizontal" [linear]="true" #stepper>
+    <mat-step>
+      <form>
+        <ng-template matStepLabel>Choose input symbols</ng-template>
+        <p>
+          Specify input symbols for your problem here. Existing symbols can be
+          edited by changing the value in the row's 'Symbol' field. Use the 'Add
+          Symbol' button to add a new input symbol.
+        </p>
+        <button mat-raised-button (click)="addSymbol()" class="spacer">
+          Add Symbol
+        </button>
+
+        <table class="demo-table">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Symbol</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let symbol of inputSymbols; let i = index">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>
+                <input
+                  #symbolInput
+                  matInput
+                  type="text"
+                  [value]="symbol"
+                  (change)="editSymbol(i, symbol, symbolInput.value)"
+                />
+              </td>
+              <td>
+                <button mat-button (click)="deleteSymbol(i, symbol)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div>
+          <button
+            mat-raised-button
+            matStepperNext
+            class="spacer"
+            [disabled]="!inputSymbolsValid()"
+          >
+            Next
+          </button>
+        </div>
+      </form>
+    </mat-step>
+
+    <mat-step>
+      <form>
+        <ng-template matStepLabel>Create solution automaton</ng-template>
+        <ng-container
+          *ngTemplateOutlet="automatonCreateEditTemplate"
+        ></ng-container>
+        <div>
+          <button mat-raised-button matStepperPrevious class="spacer">
+            Back
+          </button>
+          <button mat-raised-button matStepperNext class="spacer">Next</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <mat-step>
+      <ng-template matStepLabel>Test automaton (optional)</ng-template>
+      <p *ngIf="automatonValidity && !automatonValidity.validDFA">
+        Your automaton is not a valid DFA. Reason:
+        {{ automatonValidity.validityReasons.join(' ') }}
+        <br /><br />
+        Return here when your automaton is a valid DFA to optionally test that
+        it classifies words as intended.
+      </p>
+
+      <div *ngIf="automatonValidity?.validDFA">
+        <p>
+          Optionally test your automaton to verify that it classifies words as
+          intended.
+        </p>
+
+        <div>
+          <mat-form-field class="spacer">
+            <mat-label>Minimum Word Length</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              [(ngModel)]="minimumLengthValue"
+            />
+          </mat-form-field>
+
+          <mat-form-field class="spacer">
+            <mat-label>Maximum Word Length</mat-label>
+            <input
+              matInput
+              type="number"
+              min="0"
+              [(ngModel)]="maximumLengthValue"
+            />
+          </mat-form-field>
+
+          <button mat-raised-button (click)="generateWords()" class="spacer">
+            Generate Words
+          </button>
+        </div>
+
+        <div *ngIf="acceptedWords && rejectedWords">
+          <p>
+            Accepted words:
+            {{
+              acceptedWords.length === 0
+                ? 'None'
+                : "'" + acceptedWords.join("', '") + "'"
+            }}<br />Rejected words:
+            {{
+              rejectedWords.length === 0
+                ? 'None'
+                : "'" + rejectedWords.join("', '") + "'"
+            }}
+          </p>
+        </div>
+
+        <div>
+          <mat-form-field class="spacer">
+            <mat-label>Word</mat-label>
+            <input matInput type="text" [(ngModel)]="wordToCheck" />
+          </mat-form-field>
+
+          <button mat-raised-button (click)="checkWord()" class="spacer">
+            Classify Word
+          </button>
+        </div>
+
+        <div *ngIf="wordAccepted !== undefined">
+          <p>
+            {{
+              (wordAcceptedIsError() ? '' : 'Word accepted: ') + wordAccepted
+            }}
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <button mat-raised-button matStepperPrevious class="spacer">
+          Back
+        </button>
+        <button mat-raised-button matStepperNext class="spacer">Next</button>
+      </div>
+    </mat-step>
+
+    <mat-step>
+      <ng-template matStepLabel>Give title and description</ng-template>
+      <div fxLayout="column">
+        <mat-form-field>
+          <mat-label>Problem Name</mat-label>
+          <input matInput type="text" [(ngModel)]="problemNameValue" />
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Problem Description</mat-label>
+          <textarea
+            matInput
+            [(ngModel)]="problemDescriptionValue"
+            rows="4"
+          ></textarea>
+        </mat-form-field>
+      </div>
+
+      <div>
+        <mat-slide-toggle [(ngModel)]="enableExampleWords" class="spacer">
+          Enable example words to be shown alongside problem description
+        </mat-slide-toggle>
+
+        <div *ngIf="enableExampleWords"></div>
+      </div>
+
+      <div>
+        <button mat-raised-button matStepperPrevious class="spacer">
+          Back
+        </button>
+        <button
+          mat-raised-button
+          (click)="createAutomaton()"
+          class="spacer"
+          [disabled]="
+            problemNameValue.length === 0 ||
+            problemDescriptionValue.length === 0 ||
+            !automatonValidity.validDFA
+          "
+        >
+          Create Problem
+        </button>
+        <button mat-raised-button (click)="stepper.reset()" class="spacer">
+          Reset
+        </button>
+      </div>
+    </mat-step>
+  </mat-stepper>
+</div>
+
+<div *ngIf="!automatonToEdit && !creatingProblem">
+  <ng-container *ngTemplateOutlet="automatonCreateEditTemplate"></ng-container>
+</div>
+
+<ng-template #automatonCreateEditTemplate>
+  <div>
+    <button mat-raised-button (click)="addNode()" class="spacer">
+      Add State
+    </button>
+
+    <button
+      mat-raised-button
+      (click)="deleteSelected()"
+      [disabled]="!elementsSelected()"
+      class="spacer"
+    >
+      Delete Selected
+    </button>
+    <button
+      mat-raised-button
+      (click)="makeInitialState()"
+      [disabled]="!oneNodeSelected()"
+      class="spacer"
+    >
+      Make Initial State
+    </button>
+    <button
+      mat-raised-button
+      (click)="toggleAcceptingState()"
+      [disabled]="!nodesSelected()"
+      class="spacer"
+    >
+      Toggle Accepting
+    </button>
+    <button
+      mat-raised-button
+      (click)="editTransitions()"
+      [disabled]="!edgesSelected()"
+      class="spacer"
+    >
+      Edit Transitions
+    </button>
+    <button
+      mat-raised-button
+      (click)="startDraw()"
+      [disabled]="!oneNodeSelected()"
+      class="spacer"
+    >
+      Add Transition
+    </button>
+
+    <a
+      [matTooltip]="
+        automatonValidity && !automatonValidity.validDFA
+          ? automatonValidity.validityReasons.join(' ')
+          : automatonToEdit
+          ? 'Update the Automaton'
+          : creatingProblem
+          ? 'Continue to the next step to create the problem'
+          : 'Create the Automaton'
+      "
+      class="spacer"
+    >
+      <button
+        mat-raised-button
+        (click)="createAutomaton()"
+        [disabled]="!automatonValidity?.validDFA || this.creatingProblem"
+        class="spacer"
+      >
+        {{ automatonToEdit ? 'Update' : problemToAttempt ? 'Check' : 'Create' }}
+      </button>
+    </a>
+    <mat-slide-toggle
+      [(ngModel)]="drawModeChecked"
+      (change)="onDrawModeSliderChange()"
+      class="spacer"
+    >
+      Draw Mode
+    </mat-slide-toggle>
+  </div>
+
+  <div *ngIf="!creatingProblem && !problemToAttempt">
+    Input Symbols:
+    {{ inputSymbols.length > 0 ? inputSymbols.join(', ') : 'None' }}
+  </div>
+
+  <div *ngIf="problemAttemptFeedback">
+    {{ problemAttemptFeedback }}
+  </div>
+
+  <div id="cy"></div>
+</ng-template>

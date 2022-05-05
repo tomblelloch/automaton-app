@@ -1,0 +1,57 @@
+@import '~@angular/material/prebuilt-themes/indigo-pink.css';
+
+* {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+}
+
+body {
+  margin: 0;
+  padding: 30px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+ul {
+  list-style-type: none;
+  margin-top: 4px;
+}
+
+nav a {
+  padding: 5px 10px;
+  text-decoration: none;
+  margin-right: 10px;
+  margin-top: 10px;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+nav a:hover {
+  color: white;
+  background-color: #42545c;
+}
+
+.demo-table {
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+}
+
+.spacer {
+  margin-left: 8px;
+  margin-bottom: 8px;
+}
+
+.spacer + .spacer {
+  margin-left: 8px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.example-button-row {
+  display: table-cell;
+  width: 490px;
+  margin: 8px 8px 8px 0;
+}

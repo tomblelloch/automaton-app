@@ -1,0 +1,35 @@
+<h1 mat-dialog-title>Select Input Symbols</h1>
+
+<div mat-dialog-content>
+  <section class="example-section">
+    <mat-checkbox
+      [checked]="allChecked"
+      [indeterminate]="someChecked()"
+      (change)="setAll($event.checked)"
+    >
+      Select All
+    </mat-checkbox>
+    <ul>
+      <li>
+        <div *ngFor="let symbol of this.symbols">
+          <mat-checkbox
+            [(ngModel)]="symbol.checked"
+            (change)="updateAllChecked()"
+            >{{ symbol.name }}</mat-checkbox
+          >
+        </div>
+      </li>
+    </ul>
+  </section>
+</div>
+
+<div mat-dialog-actions>
+  <button mat-raised-button [mat-dialog-close]="undefined">Cancel</button>
+  <button
+    mat-raised-button
+    [mat-dialog-close]="symbols"
+    [disabled]="!someChecked() && !allChecked"
+  >
+    Confirm
+  </button>
+</div>

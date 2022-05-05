@@ -1,0 +1,15 @@
+<h2>Attempt Problems</h2>
+
+<ng-container *ngFor="let p of problems">
+  <h3>{{ p.problem.title }}</h3>
+  <p>{{ p.problem.description }}</p>
+  <div>
+    <button
+      mat-raised-button
+      (click)="attemptProblem(p.problem)"
+      class="spacer"
+    >
+      Attempt
+    </button>
+  </div>
+</ng-container>
